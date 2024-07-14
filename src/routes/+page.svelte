@@ -6,7 +6,7 @@
 
   let formData = {
     firstName: '',
-    lastName: '',
+    surname: '',
     emailOrMobile: '',
     password: '',
     dateOfBirth: writable({ day: '', month: '', year: '' }),
@@ -84,7 +84,7 @@
 
   const formDataToSend = {
   firstName: formData.firstName,
-  lastName: formData.lastName,
+  surname: formData.surname,
   emailOrMobile: formData.emailOrMobile, // Already a string from input type=text
   password: formData.password,
   dateOfBirth: get(formData.dateOfBirth),
@@ -108,6 +108,7 @@ try {
 
   const result = await response.json();
   console.log(result);
+  alert("signup successful")
 } catch (error) {
   console.error('Error:', error);
 }
@@ -123,7 +124,7 @@ try {
   <form id="signup-form" on:submit={handleSubmit}>
     <div class="name-fields">
       <input placeholder="First Name" type="text" bind:value={formData.firstName} />
-      <input type="text" placeholder="Surname" bind:value={formData.lastName} />
+      <input type="text" placeholder="Surname" bind:value={formData.surname} />
     </div>
 
     <input placeholder="Enter Mobile number or email address" type="text" bind:value={formData.emailOrMobile} />
