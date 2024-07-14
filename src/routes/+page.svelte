@@ -38,7 +38,7 @@
   if (!formData.emailOrMobile) {
     contactError.set('Email or Mobile Number is required.');
   } else if (!isValidEmail(formData.emailOrMobile) && !isValidMobileNumber(formData.emailOrMobile)) {
-    contactError.set('Please enter a valid Email or Mobile Number.');
+    contactError.set('Mobile Number must be 10 digit.');
   } else {
     contactError.set('');
   }
