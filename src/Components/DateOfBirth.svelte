@@ -1,7 +1,6 @@
 <script lang="ts">
-  import type { Writable } from 'svelte/store';
   import { writable } from 'svelte/store';
-
+  import type { Writable } from 'svelte/store';
   export let dob: Writable<{ day: string, month: string, year: string }>;
   export let errorMessage: Writable<string>; // Declare errorMessage prop
 
@@ -47,7 +46,7 @@
 </script>
 
 <div class="dob-field">
-  <label>Date of Birth</label>
+  
   <div class="dob-inputs">
     <select id="day" bind:value={$dob.day} on:change={validateDob}>
       <option value="">Day</option>

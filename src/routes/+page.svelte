@@ -1,100 +1,117 @@
 <script lang="ts">
-  import { writable } from 'svelte/store';
-  import type { Writable } from 'svelte/store';
-  import '../app.css'
-  // Stores for error messages and form data
-  let errorMessageDob: Writable<string> = writable('');
-  let errorMessageGender: Writable<string> = writable('');
-  let firstName: string = '';
-  let surname: string = '';
-  let contact: string = '';
-  let password: string = '';
-  let gender: Writable<string> = writable('');
-  let dob: Writable<{ day: string, month: string, year: string }> = writable({ day: '', month: '', year: '' });
+  import DateOfBirth from '../Components/DateOfBirth.svelte';
+  import Gender from '../Components/Gender.svelte';
+  import { writable, get } from 'svelte/store';
+  import '../app.css';
 
-  // Function to validate Date of Birth
-  const validateDob = () => {
-    const { day, month, year } = $dob;
-    if (day === '' || month === '' || year === '') {
-      errorMessageDob.set('Invalid Date, please select a valid date');
+  let formData = {
+    firstName: '',
+    lastName: '',
+    emailOrMobile: '',
+    password: '',
+    dateOfBirth: writable({ day: '', month: '', year: '' }),
+    gender: writable('')
+  };
+
+  let contactError = writable('');
+  let dobError = writable('');
+  let genderError = writable('');
+  function isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  }
+
+  function isValidMobileNumber(mobileNumber: string): boolean {
+  const mobileNumberRegex = /^[0-9]{10}$/; // Example: 10 digits only
+
+  return mobileNumberRegex.test(mobileNumber);
+}
+
+  function isValidDate(day: number, month: number, year: number): boolean {
+    const date = new Date(year, month, day);
+    return date.getFullYear() === year && date.getMonth() === month && date.getDate() === day;
+  }
+
+  function validateForm() {
+  let currentErrors: { [key: string]: string } = {};
+
+  if (!formData.emailOrMobile) {
+    contactError.set('Email or Mobile Number is required.');
+  } else if (!isValidEmail(formData.emailOrMobile) && !isValidMobileNumber(formData.emailOrMobile)) {
+    contactError.set('Please enter a valid Email or Mobile Number.');
+  } else {
+    contactError.set('');
+  }
+
+  formData.dateOfBirth.update(dob => {
+    const { day, month, year } = dob;
+    if (!day || !month || !year) {
+      currentErrors.dateOfBirth = 'Date of Birth is required.';
     } else {
-      errorMessageDob.set('');
+      const monthIndex = new Date(`${month} 1`).getMonth();
+      const dayNumber = parseInt(day, 10);
+      const monthNumber = monthIndex;
+      const yearNumber = parseInt(year, 10);
+
+      if (!isValidDate(dayNumber, monthNumber, yearNumber)) {
+        currentErrors.dateOfBirth = 'Invalid Date of Birth.';
+      }
     }
-  };
+    return dob;
+  });
 
-  // Function to validate Gender
-  const validateGender = () => {
-    if (!$gender || $gender === '') {
-      errorMessageGender.set('Please choose a gender');
-    } else {
-      errorMessageGender.set('');
-    }
-  };
+  if (!get(formData.gender)) {
+    genderError.set('Gender is required.');
+  } else {
+    genderError.set('');
+  }
 
-  // Options for days, months, and years
-  let days: string[] = [];
-  let months: string[] = [];
-  let years: string[] = [];
+  if (Object.keys(currentErrors).length === 0) {
+    dobError.set('');
+  } else {
+    dobError.set(currentErrors.dateOfBirth || '');
+  }
 
-  // Function to populate days
-  const populateDays = () => {
-    for (let i = 1; i <= 31; i++) {
-      days.push(i.toString());
-    }
-  };
+  return Object.keys(currentErrors).length === 0;
+}
 
-  // Function to populate months
-  const populateMonths = () => {
-    months = [
-      'January', 'February', 'March', 'April', 'May', 'June',
-      'July', 'August', 'September', 'October', 'November', 'December'
-    ];
-  };
-
-  // Function to populate years
-  const populateYears = () => {
-    const currentYear = new Date().getFullYear();
-    for (let i = currentYear; i >= currentYear - 100; i--) {
-      years.push(i.toString());
-    }
-  };
-
-  // Call functions to populate options
-  populateDays();
-  populateMonths();
-  populateYears();
-
-  // Function to handle form submission
-  const handleSubmit = async (event: Event) => {
+  async function handleSubmit(event: Event) {
     event.preventDefault();
 
-    try {
-      const formData = {
-        firstName,
-        surname,
-        contact,
-        password,
-        gender: $gender,
-        dob: $dob
-      };
-      const apiUrl = import.meta.env.VITE_API_URL as string;
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Signup failed');
-      }
-
-      alert('Signup successful!');
-    } catch (error) {
-      alert('Signup failed! Please try again.');
+    if (!validateForm()) {
+      return;
     }
-  };
+
+  const formDataToSend = {
+  firstName: formData.firstName,
+  lastName: formData.lastName,
+  emailOrMobile: formData.emailOrMobile, // Already a string from input type=text
+  password: formData.password,
+  dateOfBirth: get(formData.dateOfBirth),
+  gender: get(formData.gender)
+};
+
+
+try {
+ 
+  const response = await fetch("http://localhost:5000/api/user/signup", {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(formDataToSend)
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`);
+  }
+
+  const result = await response.json();
+  console.log(result);
+} catch (error) {
+  console.error('Error:', error);
+}
+  }
 </script>
 
 <main class="signup-container">
@@ -102,64 +119,23 @@
     <h2>Sign Up</h2>
     <span class="close-btn">&times;</span>
   </div>
-  <form id="signup-form" on:submit|preventDefault={handleSubmit}>
+
+  <form id="signup-form" on:submit={handleSubmit}>
     <div class="name-fields">
-      <input type="text" placeholder="First Name" bind:value={firstName} required>
-      <input type="text" placeholder="Surname" bind:value={surname} required>
+      <input placeholder="First Name" type="text" bind:value={formData.firstName} />
+      <input type="text" placeholder="Surname" bind:value={formData.lastName} />
     </div>
-    <input type="text" placeholder="Enter Mobile number or email address" bind:value={contact}>
-    <input type="password" placeholder="Password must be at least 4 chars long" bind:value={password}>
+
+    <input placeholder="Enter Mobile number or email address" type="text" bind:value={formData.emailOrMobile} />
+    {#if $contactError}
+    <p class="error">{$contactError}</p>
+  {/if}
+    <input placeholder="Password must be at least 4 chars long" type="password" bind:value={formData.password} />
+
     
-    <!-- Date of Birth Field -->
-    <div class="dob-field">
-      <label>Date of Birth</label>
-      <div class="dob-inputs">
-        <select id="day" bind:value={$dob.day} on:change={validateDob}>
-          <option value="">Day</option>
-          {#each days as dayOption (dayOption)}
-            <option value={dayOption}>{dayOption}</option>
-          {/each}
-        </select>
-        <select id="month" bind:value={$dob.month} on:change={validateDob}>
-          <option value="">Month</option>
-          {#each months as monthOption (monthOption)}
-            <option value={monthOption}>{monthOption}</option>
-          {/each}
-        </select>
-        <select id="year" bind:value={$dob.year} on:change={validateDob}>
-          <option value="">Year</option>
-          {#each years as yearOption (yearOption)}
-            <option value={yearOption}>{yearOption}</option>
-          {/each}
-        </select>
-      </div>
-      {#if $errorMessageDob}
-        <div class="error-message dob-error">{$errorMessageDob}</div>
-      {/if}
-    </div>
 
-    <!-- Gender Field -->
-    <div class="gender-field">
-      <p>Please choose a gender. You can change who can see this later.</p>
-      <div class="gender-options" on:change={validateGender}>
-        <label>
-          Female
-          <input type="radio" name="gender" bind:group={$gender} value="Female">
-        </label>
-        <label>
-          Male
-          <input type="radio" name="gender" bind:group={$gender} value="Male">
-        </label>
-        <label>
-          Custom
-          <input type="radio" name="gender" bind:group={$gender} value="Custom">
-        </label>
-      </div>
-      {#if $errorMessageGender}
-        <div class="error-message">{$errorMessageGender}</div>
-      {/if}
-    </div>
-
+    <DateOfBirth dob={formData.dateOfBirth} errorMessage={dobError} />
+    <Gender gender={formData.gender} errorMessage={genderError} />
     <p class="terms">By clicking Sign Up, you agree to our User Agreement, Privacy Policy, and Cookie Policy.</p>
     <div class="form-buttons">
       <button type="submit" class="signup-btn">Sign Up</button>
@@ -169,5 +145,7 @@
 </main>
 
 <style>
-  /* Add your CSS styles here */
+  .error {
+    color: red;
+  }
 </style>
