@@ -8,25 +8,17 @@ body {
   margin: 0;
 }
 
-.signup-container {
+/* .signup-container {
   background-color: #f0f2f5;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   width: 400px;
-}
+} */
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
 
-h2 {
-  margin: 0;
-  font-size: 24px;
-}
+
+
 
 .close-btn {
   cursor: pointer;
